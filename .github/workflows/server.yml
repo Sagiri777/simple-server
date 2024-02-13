@@ -1,0 +1,23 @@
+name: Python Workflow
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.8
+
+    - name: Install dependencies
+      run: |
+        pip install -r requirements.txt  # 请根据你的项目修改这里
+
+    - name: Run Python script
+      run: python simple-server.py  # 请替换为你的脚本文件名
