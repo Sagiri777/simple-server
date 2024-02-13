@@ -1,9 +1,29 @@
-from flask import Flask, request
-import socket
-import base64
 import subprocess
-import requests
-import sys  # 引入 sys 模块
+import ast
+import re
+import sys
+import socket
+from flask import Flask
+
+def extract_libraries_with_versions(script_content):
+    tree = ast.parse(script_content)
+    libraries = {}
+
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.Import, ast.ImportFrom)):
+            for alias in node.names:
+                library_name = alias.name
+                version_comment = None
+
+                if node.lineno < len(script_content.split('\n')):  # 检查是否有行注释
+                    line = script_content.split('\n')[node.lineno - 1]
+                    match = re.search(r'#\s*版本\s*:\s*(\S+)', line)  # 修改正则表达式
+                    if match:
+                        version_comment = match.group(1)
+
+                libraries[library_name] = version_comment
+
+    return libraries
 
 app = Flask(__name__)
 
@@ -17,12 +37,37 @@ port = 5000
 run_extra_script = 1  # 设置为1时执行，设置为其他值时不执行
 
 if run_extra_script == 1:
-    try:
-        result = subprocess.check_output(['python3', '1.py'], text=True, stderr=subprocess.STDOUT)
-        print(f'执行 1.py 结果：\n{result}')
-    except subprocess.CalledProcessError as e:
-        print(f'执行 1.py 出错：\n{e.output}')
-    
+    # 解析 1.py 文件，获取导入的库及其版本
+    with open('1.py', 'r') as script_file:
+        script_content = script_file.read()
+        libraries_with_versions = extract_libraries_with_versions(script_content)
+
+        if libraries_with_versions:
+            print(f'找到导入的库及其版本：{libraries_with_versions}')
+
+            # 尝试安装指定版本或最新版本
+            for library, version in libraries_with_versions.items():
+                install_command = [f'pip install {library}']
+                if version:
+                    install_command.append(f'=={version}')
+                
+                try:
+                    subprocess.check_output(install_command, shell=True, text=True, stderr=subprocess.STDOUT)
+                    print(f'成功安装 {library} 的版本 {version or "最新版"}')
+                except subprocess.CalledProcessError as e:
+                    print(f'安装 {library} 的版本 {version or "最新版"} 时出错：\n{e.output}')
+                    sys.exit(1)
+        else:
+            print('未找到导入的库及其版本')
+
+            # 没有找到版本信息，尝试安装最新版本
+            try:
+                subprocess.check_output(['pip', 'install', '-r', 'requirements.txt'], text=True, stderr=subprocess.STDOUT)
+                print('成功安装最新版依赖')
+            except subprocess.CalledProcessError as e:
+                print(f'安装最新版依赖时出错：\n{e.output}')
+                sys.exit(1)
+
     sys.exit()  # 执行完 1.py 后自动退出程序
 
 print(f'喵~服务器IP地址是：{ip_address}，程序运行端口是：{port}')
