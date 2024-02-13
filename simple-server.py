@@ -1,10 +1,29 @@
-from flask import Flask, request
-import socket
+import os
 import base64
 import subprocess
-import requests
-import ast
+from datetime import datetime
 import sys
+from flask import Flask, request
+import requests
+
+app = Flask(__name__)
+
+# GitHub 相关配置
+github_repo_owner = 'Sagiri777'  # 替换为你的 GitHub 用户名
+github_repo_name = 'simple-server'  # 替换为你的 GitHub 仓库名
+
+# 从 secrets 中加载 GitHub personal access token
+github_token = os.getenv('GITHUB_TOKEN')
+
+# 获取当前时间戳，用于文件名
+current_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
+
+# 设置 util_results 文件夹路径
+results_folder = 'util_results'
+
+# 如果文件夹不存在，创建它
+if not os.path.exists(results_folder):
+    os.makedirs(results_folder)
 
 app = Flask(__name__)
 
@@ -80,6 +99,31 @@ if run_extra_script == 1:
     sys.exit()  # 执行完 1.py 后自动退出程序
 
 print(f'喵~服务器IP地址是：{ip_address}，程序运行端口是：{port}')
+# 遍历 util_results 文件夹中的文件并上传到 GitHub
+def upload_results_to_github():
+    for filename in os.listdir(results_folder):
+        file_path = os.path.join(results_folder, filename)
+
+        # 上传文件到 GitHub
+        upload_url = f'https://api.github.com/repos/{github_repo_owner}/{github_repo_name}/contents/util_results/{filename}'
+        with open(file_path, 'r') as file_content:
+            content_base64 = base64.b64encode(file_content.read().encode()).decode()
+
+        headers = {
+            'Authorization': f'token {github_token}',
+            'Accept': 'application/vnd.github.v3+json',
+        }
+        payload = {
+            'message': f'Upload {filename}',
+            'content': content_base64,
+        }
+        response = requests.put(upload_url, headers=headers, json=payload)
+
+        if response.status_code == 200:
+            print(f'文件 {filename} 上传成功！')
+        else:
+            print(f'文件 {filename} 上传失败，状态码：{response.status_code}')
+upload_results_to_github()
 
 # ... （以下为原有的路由和处理逻辑）
 
