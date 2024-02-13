@@ -3,6 +3,7 @@ import socket
 import base64
 import subprocess
 import requests
+import sys  # 引入 sys 模块
 
 app = Flask(__name__)
 
@@ -12,8 +13,21 @@ ip_address = socket.gethostbyname(socket.gethostname())
 # 为Flask指定实际端口
 port = 5000
 
+# 设置变量，用于判断是否执行额外的脚本
+run_extra_script = 1  # 设置为1时执行，设置为其他值时不执行
+
+if run_extra_script == 1:
+    try:
+        result = subprocess.check_output(['python3', '1.py'], text=True, stderr=subprocess.STDOUT)
+        print(f'执行 1.py 结果：\n{result}')
+    except subprocess.CalledProcessError as e:
+        print(f'执行 1.py 出错：\n{e.output}')
+    
+    sys.exit()  # 执行完 1.py 后自动退出程序
+
 print(f'喵~服务器IP地址是：{ip_address}，程序运行端口是：{port}')
 
+# ... （以下为原有的路由和处理逻辑）
 @app.route('/')
 def home():
     return '欢迎来到喵~服务器'
