@@ -1,4 +1,4 @@
-from twitterscraper import query_tweets
+from twitterscraper import query_tweets#name-twitterscraper
 
 if __name__ == '__main__':
     #list_of_tweets = query_tweets("里神咕", 10)
