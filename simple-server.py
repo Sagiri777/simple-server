@@ -24,16 +24,24 @@ imported_libraries = {}
 def extract_libraries(script_content):
     tree = ast.parse(script_content)
 
+    current_module = None
+
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for alias in node.names:
                 imported_libraries[alias.name] = get_library_info(alias, node)
         elif isinstance(node, ast.ImportFrom):
-            imported_libraries[node.module] = get_library_info(node)
+            current_module = node.module
+            for alias in node.names:
+                imported_libraries[alias.name] = get_library_info(alias)
+        elif isinstance(node, ast.Assign) and current_module:
+            for target in node.targets:
+                if isinstance(target, ast.Name):
+                    imported_libraries[target.id] = {'name': current_module}
 
-def get_library_info(alias_or_module, import_node=None):
+def get_library_info(alias_or_module):
     library_info = {'name': None, 'version': None}
-    if import_node and alias_or_module.name.startswith('# '):
+    if alias_or_module.name.startswith('# '):
         comments = alias_or_module.name[2:].split(',')
         for comment in comments:
             parts = comment.strip().split('-')
@@ -51,10 +59,11 @@ extract_libraries(script_content)
 
 # 安装缺失的库
 for name, info in imported_libraries.items():
-    version = f'=={info["version"]}' if info["version"] else ''
+    version = f'=={info["version"]}' if info.get("version") else ''
     try:
-        subprocess.check_output(['pip', 'install', '--upgrade', f'{info["name"]}{version}'], text=True, stderr=subprocess.STDOUT)
-        print(f'成功安装/升级库: {info["name"]}{version}')
+        library_name = info.get("name") or name
+        subprocess.check_output(['pip', 'install', '--upgrade', f'{library_name}{version}'], text=True, stderr=subprocess.STDOUT)
+        print(f'成功安装/升级库: {library_name}{version}')
     except subprocess.CalledProcessError as e:
         print(f'安装/升级库时出错：\n{e.output}')
 
@@ -71,6 +80,8 @@ if run_extra_script == 1:
     sys.exit()  # 执行完 1.py 后自动退出程序
 
 print(f'喵~服务器IP地址是：{ip_address}，程序运行端口是：{port}')
+
+# ... （以下为原有的路由和处理逻辑）
 
 # ... （以下为原有的路由和处理逻辑）
 
