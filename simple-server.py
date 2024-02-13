@@ -13,7 +13,7 @@ github_repo_owner = 'Sagiri777'  # 替换为你的 GitHub 用户名
 github_repo_name = 'simple-server'  # 替换为你的 GitHub 仓库名
 
 # 从 secrets 中加载 GitHub personal access token
-github_token = os.getenv('GITHUB_TOKEN')
+github_token = os.getenv('GH_TOKEN')
 
 # 获取当前时间戳，用于文件名
 current_timestamp = datetime.now().strftime('%Y%m%d%H%M%S')
