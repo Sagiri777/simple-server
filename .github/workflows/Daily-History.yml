@@ -26,4 +26,4 @@ jobs:
       env:
         BAIDU_COOKIE: ${{ secrets.BAIDU_COOKIE }}
         WECHAT_BOT_API_KEY: ${{ secrets.WECHAT_BOT_API_KEY }}
-      run: python path/to/your/script.py  # 请替换为你的实际脚本路径
+      run: python baiduHistory.py  # 请替换为你的实际脚本路径
