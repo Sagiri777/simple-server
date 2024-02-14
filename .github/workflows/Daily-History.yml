@@ -1,11 +1,11 @@
-name: Daily History
+name: Daily-History
 
 on:
   schedule:
     - cron: '0 22 * * *'  # 每天北京时间早上6点触发
 
 jobs:
-  get_daily_history:
+  get-daily-history:
     runs-on: ubuntu-latest
 
     steps:
