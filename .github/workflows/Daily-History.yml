@@ -1,0 +1,29 @@
+name: Daily History
+
+on:
+  schedule:
+    - cron: '0 22 * * *'  # 每天北京时间早上6点触发
+
+jobs:
+  get_daily_history:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout Repository
+      uses: actions/checkout@v2
+
+    - name: Set up Python
+      uses: actions/setup-python@v2
+      with:
+        python-version: 3.x
+
+    - name: Install Dependencies
+      run: |
+        pip install requests
+        pip install loghelper  # 如果还未安装 loghelper，请根据你的实际需求添加依赖
+
+    - name: Run Daily History Script
+      env:
+        BAIDU_COOKIE: ${{ secrets.BAIDU_COOKIE }}
+        WECHAT_BOT_API_KEY: ${{ secrets.WECHAT_BOT_API_KEY }}
+      run: python path/to/your/script.py  # 请替换为你的实际脚本路径
