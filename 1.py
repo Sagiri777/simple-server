@@ -6,7 +6,7 @@ from loghelper import log
 
 # 获取 GitHub Secrets 中的 Cookie 和企业微信机器人 API Key 信息
 baidu_cookie = os.environ.get('BAIDU_COOKIE', '')
-wechat_api_key = os.environ.get('WECHAT_API_KEY', '')
+wechat_bot_api_key = os.environ.get('WECHAT_BOT_API_KEY', '')
 
 def get_history_events():
     # 获取当前日期信息
@@ -65,7 +65,7 @@ def save_to_file(content, filename):
 
 def send_to_wechat(history_content):
     # 企业微信机器人推送
-    wechat_url = f'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={wechat_api_key}'
+    wechat_url = f'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={wechat_bot_api_key}'
     headers = {'Content-Type': 'application/json'}
 
     payload = {
