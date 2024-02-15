@@ -1,16 +1,60 @@
 import os
 import requests
 import json
-import get_time
-from loghelper import log
+import datetime
+import logging
+
+class LogHelper:
+    def __init__(self, log_name='Autopushing'):
+        self.log = logging.getLogger(log_name)
+
+    def configure_logging(self, file_path=None):
+        if file_path and os.path.exists(file_path):
+            logging.config.fileConfig(file_path, encoding='utf-8')
+        else:
+            logging.basicConfig(
+                level=logging.INFO,
+                format='%(asctime)s %(levelname)s %(message)s',
+                datefmt='%Y-%m-%dT%H:%M:%S'
+            )
+
+    def info(self, message):
+        self.log.info(message)
+
+    def error(self, message):
+        self.log.error(message)
+
+# 实例化 LogHelper
+log_helper = LogHelper()
+# 配置日志
+log_helper.configure_logging(os.path.join(os.path.dirname(os.path.realpath(__file__)), "config/logging.ini"))
 
 # 获取 GitHub Secrets 中的 Cookie 和企业微信机器人 API Key 信息
 baidu_cookie = os.environ.get('BAIDU_COOKIE', '')
 wechat_bot_api_key = os.environ.get('WECHAT_BOT_API_KEY', '')
 
+def gettime():
+    month = datetime.datetime.now().month
+    day = datetime.datetime.now().day
+    year = datetime.datetime.now().year
+    log_helper.info(f'正在获取日期信息……')
+    smonth1 = len(str(month))
+    if month < 10:
+        smonth = str(0) + str(month)
+    else:
+        smonth = str(month)
+    if day < 10:
+        sday = str(0) + str(day)
+    else:
+        sday = str(day)
+    date = smonth + sday
+    date_list = [smonth, sday, year, month, day]
+    log_helper.info(f'获取日期信息完成！')
+    return date_list
+
 def get_history_events():
     # 获取当前日期信息
-    date_parts = get_time.gettime()
+    date_parts = gettime()
     smonth, sday, year, month, day = date_parts
 
     date_str = smonth + sday
@@ -27,7 +71,7 @@ def get_history_events():
         "Sec-Fetch-Site": "same-origin"
     }
     r = requests.get(url=api_url, headers=headers)
-    log.info('正在获取历史上的今天信息')
+    log_helper.info('正在获取历史上的今天信息')
     j = json.loads(r.text)
 
     # 提取历史事件信息
@@ -43,7 +87,7 @@ def get_history_events():
         event_type = event['type']
         history_content += f'{year_event}年{title}\n'
 
-    log.info('获取完成！')
+    log_helper.info('获取完成！')
 
     # 将历史事件保存到文件（覆盖已存在文件）
     save_to_file(history_content, f'daily-history/{year}-{month}-{day}.txt')
@@ -63,25 +107,11 @@ def save_to_file(content, filename):
     with open(file_path, 'w', encoding='utf-8') as file:
         file.write(content)
 
-def send_to_wechat(history_content):
-    # 企业微信机器人推送
-    wechat_url = f'https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key={wechat_bot_api_key}'
-    headers = {'Content-Type': 'application/json'}
-
-    payload = {
-        "msgtype": "text",
-        "text": {
-            "content": history_content
-        }
-    }
-
-    requests.post(wechat_url, headers=headers, data=json.dumps(payload))
-
+# 主程序入口
 if __name__ == '__main__':
     history_events = get_history_events()
 
     if history_events:
-        send_to_wechat(history_events)
-        print("历史上的今天推送成功！")
+        log_helper.info("历史上的今天推送成功！")
     else:
-        print("无法获取历史事件。")
+        log_helper.error("无法获取历史事件。")
