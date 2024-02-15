@@ -1,4 +1,4 @@
-name: Daily History
+name: dailyHistory
 
 on:
   schedule:
